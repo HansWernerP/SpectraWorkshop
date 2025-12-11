@@ -1,2 +1,2 @@
 # SpectraWorkshop
-View and manypulate NIR spectra
+View and mani   pulate NIR spectra
