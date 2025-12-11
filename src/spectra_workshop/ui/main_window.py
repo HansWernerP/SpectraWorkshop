@@ -1,0 +1,171 @@
+"""Main window with MDI interface"""
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction, QIcon
+from PySide6.QtWidgets import (
+    QMainWindow,
+    QMdiArea,
+    QDockWidget,
+    QTextEdit,
+    QListWidget,
+    QToolBar,
+    QStatusBar,
+    QFileDialog,
+    QMessageBox,
+)
+
+
+class MainWindow(QMainWindow):
+    """Main application window with MDI interface"""
+
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("SpectraWorkshop")
+        self.setGeometry(100, 100, 1200, 800)
+
+        # Create MDI area
+        self.mdi_area = QMdiArea()
+        self.setCentralWidget(self.mdi_area)
+
+        # Setup UI components
+        self._create_menus()
+        self._create_toolbar()
+        self._create_statusbar()
+        self._create_dock_widgets()
+
+    def _create_menus(self):
+        """Create menu bar with File menu"""
+        menubar = self.menuBar()
+
+        # File menu
+        file_menu = menubar.addMenu("&File")
+
+        # Import CSV action
+        import_action = QAction("&Import CSV", self)
+        import_action.setShortcut("Ctrl+I")
+        import_action.setStatusTip("Import data from CSV file")
+        import_action.triggered.connect(self._import_csv)
+        file_menu.addAction(import_action)
+
+        # Export CSV action
+        export_action = QAction("&Export CSV", self)
+        export_action.setShortcut("Ctrl+E")
+        export_action.setStatusTip("Export data to CSV file")
+        export_action.triggered.connect(self._export_csv)
+        file_menu.addAction(export_action)
+
+        file_menu.addSeparator()
+
+        # Exit action
+        exit_action = QAction("E&xit", self)
+        exit_action.setShortcut("Ctrl+Q")
+        exit_action.setStatusTip("Exit application")
+        exit_action.triggered.connect(self.close)
+        file_menu.addAction(exit_action)
+
+    def _create_toolbar(self):
+        """Create toolbar with common actions"""
+        toolbar = QToolBar("Main Toolbar")
+        toolbar.setMovable(False)
+        self.addToolBar(toolbar)
+
+        # Import action
+        import_action = QAction("Import CSV", self)
+        import_action.setStatusTip("Import data from CSV file")
+        import_action.triggered.connect(self._import_csv)
+        toolbar.addAction(import_action)
+
+        # Export action
+        export_action = QAction("Export CSV", self)
+        export_action.setStatusTip("Export data to CSV file")
+        export_action.triggered.connect(self._export_csv)
+        toolbar.addAction(export_action)
+
+        toolbar.addSeparator()
+
+        # New MDI window action
+        new_window_action = QAction("New Window", self)
+        new_window_action.setStatusTip("Create a new MDI window")
+        new_window_action.triggered.connect(self._create_new_mdi_window)
+        toolbar.addAction(new_window_action)
+
+    def _create_statusbar(self):
+        """Create status bar"""
+        self.statusbar = QStatusBar()
+        self.setStatusBar(self.statusbar)
+        self.statusbar.showMessage("Ready")
+
+    def _create_dock_widgets(self):
+        """Create two dock widgets on the left side"""
+        # First dock widget (top)
+        dock1 = QDockWidget("Properties", self)
+        dock1.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+
+        # Content for first dock widget
+        dock1_content = QTextEdit()
+        dock1_content.setPlaceholderText("Properties panel...")
+        dock1.setWidget(dock1_content)
+
+        self.addDockWidget(Qt.LeftDockWidgetArea, dock1)
+
+        # Second dock widget (bottom)
+        dock2 = QDockWidget("Files", self)
+        dock2.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+
+        # Content for second dock widget
+        dock2_content = QListWidget()
+        dock2_content.addItems(["File 1", "File 2", "File 3"])
+        dock2.setWidget(dock2_content)
+
+        self.addDockWidget(Qt.LeftDockWidgetArea, dock2)
+
+        # Store references
+        self.dock1 = dock1
+        self.dock2 = dock2
+
+    def _create_new_mdi_window(self):
+        """Create a new MDI sub-window"""
+        text_edit = QTextEdit()
+        text_edit.setPlaceholderText("Enter text here...")
+
+        sub_window = self.mdi_area.addSubWindow(text_edit)
+        sub_window.setWindowTitle(f"Document {self.mdi_area.subWindowList().__len__()}")
+        sub_window.show()
+
+        self.statusbar.showMessage(f"Created new window: {sub_window.windowTitle()}", 3000)
+
+    def _import_csv(self):
+        """Import data from CSV file"""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Import CSV File",
+            "",
+            "CSV Files (*.csv);;All Files (*)"
+        )
+
+        if file_path:
+            self.statusbar.showMessage(f"Importing: {file_path}", 3000)
+            # TODO: Implement CSV import logic
+            QMessageBox.information(
+                self,
+                "Import CSV",
+                f"Import functionality will be implemented.\nSelected file: {file_path}"
+            )
+
+    def _export_csv(self):
+        """Export data to CSV file"""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export CSV File",
+            "",
+            "CSV Files (*.csv);;All Files (*)"
+        )
+
+        if file_path:
+            self.statusbar.showMessage(f"Exporting: {file_path}", 3000)
+            # TODO: Implement CSV export logic
+            QMessageBox.information(
+                self,
+                "Export CSV",
+                f"Export functionality will be implemented.\nSelected file: {file_path}"
+            )
