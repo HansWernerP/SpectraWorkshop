@@ -13,7 +13,9 @@ from PySide6.QtWidgets import (
     QStatusBar,
     QFileDialog,
     QMessageBox,
+    QTableView,
 )
+from .dataframe_table_model import DataFrameTableModel
 
 
 class MainWindow(QMainWindow):
@@ -169,6 +171,8 @@ class MainWindow(QMainWindow):
 
     def _import_csv(self):
         """Import data from CSV file"""
+        from ..data.csv_import import import_csv_with_groups, get_column_groups
+
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Import CSV File",
@@ -177,13 +181,40 @@ class MainWindow(QMainWindow):
         )
 
         if file_path:
-            self.statusbar.showMessage(f"Importing: {file_path}", 3000)
-            # TODO: Implement CSV import logic
-            QMessageBox.information(
-                self,
-                "Import CSV",
-                f"Import functionality will be implemented.\nSelected file: {file_path}"
-            )
+            try:
+                self.statusbar.showMessage(f"Importing: {file_path}", 3000)
+
+                # Import CSV with group classification
+                df = import_csv_with_groups(file_path)
+
+                # Get group information
+                groups = get_column_groups(df)
+
+                # Build info message
+                info_lines = [f"CSV file imported successfully!",
+                             f"Total rows: {len(df)}",
+                             f"Total columns: {len(df.columns)}",
+                             "",
+                             "Column groups:"]
+
+                for group, cols in sorted(groups.items()):
+                    info_lines.append(f"  {group}: {len(cols)} columns")
+
+                QMessageBox.information(
+                    self,
+                    "Import CSV",
+                    "\n".join(info_lines)
+                )
+
+                # Display DataFrame in new MDI window
+                self._display_dataframe_in_mdi(df, file_path)
+
+            except Exception as e:
+                QMessageBox.critical(
+                    self,
+                    "Import Error",
+                    f"Error importing CSV file:\n{str(e)}"
+                )
 
     def _export_csv(self):
         """Export data to CSV file"""
@@ -229,3 +260,37 @@ class MainWindow(QMainWindow):
         self.mdi_area.setViewMode(QMdiArea.SubWindowView)
         self.mdi_area.cascadeSubWindows()
         self.statusbar.showMessage("Switched to cascade view", 2000)
+
+    def _display_dataframe_in_mdi(self, df, file_path):
+        """
+        Display pandas DataFrame in a new MDI window with QTableView
+
+        Args:
+            df: pandas DataFrame with MultiIndex columns (group, column_name)
+            file_path: Path to the CSV file (used for window title)
+        """
+        # Create table view
+        table_view = QTableView()
+
+        # Create and set the custom model
+        model = DataFrameTableModel(df)
+        table_view.setModel(model)
+
+        # Adjust table view settings
+        table_view.setAlternatingRowColors(False)  # Disable alternating colors
+        table_view.horizontalHeader().setStretchLastSection(False)
+        table_view.setSelectionBehavior(QTableView.SelectRows)
+        table_view.setSelectionMode(QTableView.SingleSelection)
+
+        # Create MDI sub-window
+        sub_window = self.mdi_area.addSubWindow(table_view)
+
+        # Set window title to filename without extension
+        file_name = Path(file_path).stem
+        sub_window.setWindowTitle(file_name)
+
+        # Show and resize window
+        sub_window.show()
+        sub_window.resize(1000, 600)
+
+        self.statusbar.showMessage(f"Displaying data: {file_name}", 3000)

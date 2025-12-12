@@ -1,0 +1,6 @@
+{
+  "csv": {
+    "delimiter": ",",
+    "decimal": "."
+  }
+}
