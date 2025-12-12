@@ -1,5 +1,6 @@
 """Main window with MDI interface"""
 
+from pathlib import Path
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import (
@@ -23,6 +24,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("SpectraWorkshop")
         self.setGeometry(100, 100, 1200, 800)
 
+        # Set icon path
+        self.icon_path = Path(__file__).parent.parent / "resources" / "icons"
+
         # Create MDI area
         self.mdi_area = QMdiArea()
         self.setCentralWidget(self.mdi_area)
@@ -34,7 +38,7 @@ class MainWindow(QMainWindow):
         self._create_dock_widgets()
 
     def _create_menus(self):
-        """Create menu bar with File menu"""
+        """Create menu bar with File and View menus"""
         menubar = self.menuBar()
 
         # File menu
@@ -62,6 +66,35 @@ class MainWindow(QMainWindow):
         exit_action.setStatusTip("Exit application")
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
+
+        # View menu
+        view_menu = menubar.addMenu("&View")
+
+        # Tile windows action
+        tile_action = QAction(self._get_icon("application_tile_horizontal.png"), "&Tile", self)
+        tile_action.setStatusTip("Tile MDI windows")
+        tile_action.triggered.connect(self._set_tile_view)
+        view_menu.addAction(tile_action)
+
+        # Cascade windows action
+        cascade_action = QAction(self._get_icon("application_cascade.png"), "&Cascade", self)
+        cascade_action.setStatusTip("Cascade MDI windows")
+        cascade_action.triggered.connect(self._set_cascade_view)
+        view_menu.addAction(cascade_action)
+
+        # Tabbed view action
+        tabbed_action = QAction(self._get_icon("application_tabbed.png"), "Ta&bbed", self)
+        tabbed_action.setStatusTip("Switch to tabbed view mode")
+        tabbed_action.triggered.connect(self._set_tabbed_view)
+        view_menu.addAction(tabbed_action)
+
+        # view_menu.addSeparator()
+        #
+        # # Subwindow view action (reset to default)
+        # subwindow_action = QAction(self._get_icon("application.png"), "&Sub-Window View", self)
+        # subwindow_action.setStatusTip("Switch to sub-window view mode")
+        # subwindow_action.triggered.connect(self._set_subwindow_view)
+        # view_menu.addAction(subwindow_action)
 
     def _create_toolbar(self):
         """Create toolbar with common actions"""
@@ -169,3 +202,30 @@ class MainWindow(QMainWindow):
                 "Export CSV",
                 f"Export functionality will be implemented.\nSelected file: {file_path}"
             )
+
+    def _get_icon(self, icon_name):
+        """Get icon from resources/icons directory"""
+        icon_file = self.icon_path / icon_name
+        if icon_file.exists():
+            return QIcon(str(icon_file))
+        return QIcon()  # Return empty icon if file not found
+
+    def _set_tabbed_view(self):
+        """Switch MDI area to tabbed view mode"""
+        self.mdi_area.setViewMode(QMdiArea.TabbedView)
+        self.statusbar.showMessage("Switched to tabbed view", 2000)
+
+    # def _set_subwindow_view(self):
+    #     """Switch MDI area to sub-window view mode"""
+    #     self.mdi_area.setViewMode(QMdiArea.SubWindowView)
+    #     self.statusbar.showMessage("Switched to sub-window view", 2000)
+
+    def _set_tile_view(self):
+        self.mdi_area.setViewMode(QMdiArea.SubWindowView)
+        self.mdi_area.tileSubWindows()
+        self.statusbar.showMessage("Switched to tile view", 2000)
+
+    def _set_cascade_view(self):
+        self.mdi_area.setViewMode(QMdiArea.SubWindowView)
+        self.mdi_area.cascadeSubWindows()
+        self.statusbar.showMessage("Switched to cascade view", 2000)
