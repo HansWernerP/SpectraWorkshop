@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QTableView,
 )
 from .dataframe_table_model import DataFrameTableModel
+from src.spectra_workshop.data.jcamp_import import read_jcamp
 
 
 class MainWindow(QMainWindow):
@@ -38,6 +39,11 @@ class MainWindow(QMainWindow):
         self._create_toolbar()
         self._create_statusbar()
         self._create_dock_widgets()
+
+        # fn = '/home/hwp/app/DA7250/Alpine/2019-08-30/Erbsen/Erbsen_alle.dx'
+        # df = read_jcamp(fn)
+        # print(df)
+        # # self._display_dataframe_in_mdi(df, "data/jcamp/18O_1H_13CO_2H2O.jdx")
 
     def _create_menus(self):
         """Create menu bar with File and View menus"""
@@ -89,14 +95,6 @@ class MainWindow(QMainWindow):
         tabbed_action.setStatusTip("Switch to tabbed view mode")
         tabbed_action.triggered.connect(self._set_tabbed_view)
         view_menu.addAction(tabbed_action)
-
-        # view_menu.addSeparator()
-        #
-        # # Subwindow view action (reset to default)
-        # subwindow_action = QAction(self._get_icon("application.png"), "&Sub-Window View", self)
-        # subwindow_action.setStatusTip("Switch to sub-window view mode")
-        # subwindow_action.triggered.connect(self._set_subwindow_view)
-        # view_menu.addAction(subwindow_action)
 
     def _create_toolbar(self):
         """Create toolbar with common actions"""
@@ -171,7 +169,7 @@ class MainWindow(QMainWindow):
 
     def _import_csv(self):
         """Import data from CSV file"""
-        from ..data.csv_import import import_csv_with_groups, get_column_groups
+        from ..data.csv_import import import_csv_with_groups, get_column_groups, consolidate_x_columns
 
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -207,7 +205,8 @@ class MainWindow(QMainWindow):
                 )
 
                 # Display DataFrame in new MDI window
-                self._display_dataframe_in_mdi(df, file_path)
+                df2 = consolidate_x_columns(df)
+                self._display_dataframe_in_mdi(df2, file_path)
 
             except Exception as e:
                 QMessageBox.critical(

@@ -1,5 +1,7 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+tests/
+Import Examples/
 *.py[cod]
 *$py.class
 docs/SpectraWorkshop Promps for AI.odt

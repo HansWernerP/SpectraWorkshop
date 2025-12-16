@@ -1,6 +1,7 @@
 """Custom table model for displaying pandas DataFrame with group-based coloring"""
 
 import pandas as pd
+import numpy as np
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex
 from PySide6.QtGui import QColor
 
@@ -65,7 +66,18 @@ class DataFrameTableModel(QAbstractTableModel):
             value = self._dataframe.iloc[row, col]
 
             # Handle different data types
-            if pd.isna(value):
+            # Check for numpy array first, before pd.isna()
+            if isinstance(value, np.ndarray):
+                # For numpy arrays, display only the first value
+                if len(value) > 0:
+                    first_val = value[0]
+                    if isinstance(first_val, float):
+                        return f"{first_val:.6f}"
+                    else:
+                        return str(first_val)
+                else:
+                    return "[]"
+            elif pd.isna(value):
                 return ""
             elif isinstance(value, float):
                 return f"{value:.6f}"  # Format floats with 6 decimal places
@@ -82,7 +94,11 @@ class DataFrameTableModel(QAbstractTableModel):
         elif role == Qt.TextAlignmentRole:
             # Align numbers to the right
             value = self._dataframe.iloc[row, col]
-            if isinstance(value, (int, float)) and not pd.isna(value):
+            if isinstance(value, np.ndarray):
+                # For numpy arrays, check first element
+                if len(value) > 0 and isinstance(value[0], (int, float)):
+                    return Qt.AlignRight | Qt.AlignVCenter
+            elif isinstance(value, (int, float)) and not pd.isna(value):
                 return Qt.AlignRight | Qt.AlignVCenter
             return Qt.AlignLeft | Qt.AlignVCenter
 
