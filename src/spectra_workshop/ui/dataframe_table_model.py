@@ -30,14 +30,26 @@ class DataFrameTableModel(QAbstractTableModel):
             parent: Parent QObject
         """
         super().__init__(parent)
-        self._dataframe = dataframe
 
-        # Extract group information from MultiIndex
+        # Sort columns by group order
         if isinstance(dataframe.columns, pd.MultiIndex):
-            self._groups = dataframe.columns.get_level_values('group').tolist()
-            self._column_names = dataframe.columns.get_level_values('column').tolist()
+            # Define desired group order
+            group_order = ['sid', 'x', 'y', 'prd', 'md', 'time', 'cat', 'unknown']
+
+            # Create a categorical type with the desired order
+            groups = dataframe.columns.get_level_values('group')
+            cat_groups = pd.Categorical(groups, categories=group_order, ordered=True)
+
+            # Sort columns by the categorical group order
+            sorted_indices = cat_groups.argsort()
+            self._dataframe = dataframe.iloc[:, sorted_indices]
+
+            # Extract group information from sorted MultiIndex
+            self._groups = self._dataframe.columns.get_level_values('group').tolist()
+            self._column_names = self._dataframe.columns.get_level_values('column').tolist()
         else:
             # Fallback if no MultiIndex
+            self._dataframe = dataframe
             self._groups = ['unknown'] * len(dataframe.columns)
             self._column_names = dataframe.columns.tolist()
 
